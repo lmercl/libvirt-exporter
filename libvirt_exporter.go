@@ -21,7 +21,7 @@ import (
 
 	"github.com/libvirt/libvirt-go"
 	"github.com/prometheus/client_golang/prometheus"
-        "github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/kumina/libvirt_exporter/libvirt_schema"
@@ -39,6 +39,7 @@ type LibvirtExporter struct {
 	libvirtDomainInfoNrVirtCpuDesc *prometheus.Desc
 	libvirtDomainInfoCpuTimeDesc   *prometheus.Desc
 
+	libvirtDomainDiskSerialDesc           *prometheus.Desc
 	libvirtDomainBlockRdBytesDesc         *prometheus.Desc
 	libvirtDomainBlockRdReqDesc           *prometheus.Desc
 	libvirtDomainBlockRdTotalTimesDesc    *prometheus.Desc
@@ -93,6 +94,11 @@ func NewLibvirtExporter(uri string, exportNovaMetadata bool) (*LibvirtExporter, 
 			prometheus.BuildFQName("libvirt", "domain_info", "cpu_time_seconds_total"),
 			"Amount of CPU time used by the domain, in seconds.",
 			domainLabels,
+			nil),
+		libvirtDomainDiskSerialDesc: prometheus.NewDesc(
+			prometheus.BuildFQName("libvirt", "domain_disk", "serial"),
+			"Block device serial.",
+			append(domainLabels, "serial"),
 			nil),
 		libvirtDomainBlockRdBytesDesc: prometheus.NewDesc(
 			prometheus.BuildFQName("libvirt", "domain_block_stats", "read_bytes_total"),
@@ -188,6 +194,7 @@ func (e *LibvirtExporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- e.libvirtDomainInfoNrVirtCpuDesc
 	ch <- e.libvirtDomainInfoCpuTimeDesc
 
+	ch <- e.libvirtDomainDiskSerialDesc
 	ch <- e.libvirtDomainBlockRdBytesDesc
 	ch <- e.libvirtDomainBlockRdReqDesc
 	ch <- e.libvirtDomainBlockRdTotalTimesDesc
@@ -308,6 +315,12 @@ func (e *LibvirtExporter) CollectDomain(ch chan<- prometheus.Metric, domain *lib
 		if disk.Device == "cdrom" || disk.Device == "fd" {
 			continue
 		}
+
+		ch <- prometheus.MustNewConstMetric(
+			e.libvirtDomainDiskSerialDesc,
+			prometheus.UntypedValue,
+			0.0,
+			append(domainLabelValues, disk.Serial)...)
 
 		blockStats, err := domain.BlockStats(disk.Target.Device)
 		if err != nil {

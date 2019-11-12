@@ -283,9 +283,9 @@ func (e *LibvirtExporter) CollectDomain(ch chan<- prometheus.Metric, domain *lib
 			novaFlavor      = desc.Metadata.NovaInstance.Flavor.Name
 			novaProjectName = desc.Metadata.NovaInstance.Owner.ProjectName
 		)
-		domainLabelValues = []string{domainName, domainUUID, novaName, novaFlavor, novaProjectName}
+		domainLabelValues = []string{hostname, domainName, domainUUID, novaName, novaFlavor, novaProjectName}
 	} else {
-		domainLabelValues = []string{domainName, domainUUID}
+		domainLabelValues = []string{hostname, domainName, domainUUID}
 	}
 
 	// Report domain info.

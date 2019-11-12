@@ -63,9 +63,9 @@ type LibvirtExporter struct {
 func NewLibvirtExporter(uri string, exportNovaMetadata bool) (*LibvirtExporter, error) {
 	var domainLabels []string
 	if exportNovaMetadata {
-		domainLabels = []string{"domain", "uuid", "name", "flavor", "project_name"}
+		domainLabels = []string{"hostname", "domain", "uuid", "name", "flavor", "project_name"}
 	} else {
-		domainLabels = []string{"domain", "uuid"}
+		domainLabels = []string{"hostname", "domain", "uuid"}
 	}
 	return &LibvirtExporter{
 		uri:                uri,
@@ -238,10 +238,14 @@ func (e *LibvirtExporter) CollectFromLibvirt(ch chan<- prometheus.Metric) error 
 	if err != nil {
 		return err
 	}
+	hostname, err := conn.GetHostname()
+	if err != nil {
+		return err
+	}
 	for _, id := range domainIds {
 		domain, err := conn.LookupDomainById(id)
 		if err == nil {
-			err = e.CollectDomain(ch, domain)
+			err = e.CollectDomain(ch, domain, hostname)
 			domain.Free()
 			if err != nil {
 				return err
@@ -253,7 +257,7 @@ func (e *LibvirtExporter) CollectFromLibvirt(ch chan<- prometheus.Metric) error 
 }
 
 // CollectDomain extracts Prometheus metrics from a libvirt domain.
-func (e *LibvirtExporter) CollectDomain(ch chan<- prometheus.Metric, domain *libvirt.Domain) error {
+func (e *LibvirtExporter) CollectDomain(ch chan<- prometheus.Metric, domain *libvirt.Domain, hostname string) error {
 	// Decode XML description of domain to get block device names, etc.
 	xmlDesc, err := domain.GetXMLDesc(0)
 	if err != nil {

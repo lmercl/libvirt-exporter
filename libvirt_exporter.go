@@ -98,7 +98,7 @@ func NewLibvirtExporter(uri string, exportNovaMetadata bool) (*LibvirtExporter, 
 		libvirtDomainDiskSerialDesc: prometheus.NewDesc(
 			prometheus.BuildFQName("libvirt", "domain_disk", "serial"),
 			"Block device serial.",
-			append(domainLabels, "serial"),
+			append(domainLabels, "serial", "source"),
 			nil),
 		libvirtDomainBlockRdBytesDesc: prometheus.NewDesc(
 			prometheus.BuildFQName("libvirt", "domain_block_stats", "read_bytes_total"),
@@ -320,11 +320,15 @@ func (e *LibvirtExporter) CollectDomain(ch chan<- prometheus.Metric, domain *lib
 			continue
 		}
 
+		source := disk.Source.File
+		if source == "" {
+			source = disk.Source.Dev
+		}
 		ch <- prometheus.MustNewConstMetric(
 			e.libvirtDomainDiskSerialDesc,
 			prometheus.UntypedValue,
 			0.0,
-			append(domainLabelValues, disk.Serial)...)
+			append(domainLabelValues, disk.Serial, source)...)
 
 		blockStats, err := domain.BlockStats(disk.Target.Device)
 		if err != nil {

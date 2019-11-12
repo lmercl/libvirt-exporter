@@ -52,6 +52,7 @@ type Disk struct {
 
 type DiskSource struct {
 	File string `xml:"file,attr"`
+	Dev  string `xml:"dev,attr"`
 }
 
 type DiskTarget struct {

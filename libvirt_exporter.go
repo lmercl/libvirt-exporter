@@ -349,8 +349,8 @@ func (e *LibvirtExporter) CollectDomain(ch chan<- prometheus.Metric, domain *lib
 		return err
 	}
 
-	memoryUnused := -1
-	memoryAvailable := -1
+	var memoryUnused uint64
+	var memoryAvailable uint64
 	for _, stat := range memStats {
 		if stat.Tag == VIR_DOMAIN_MEMORY_STAT_AVAILABLE {
 			memoryAvailable = stat.Val
@@ -391,7 +391,7 @@ func (e *LibvirtExporter) CollectDomain(ch chan<- prometheus.Metric, domain *lib
 				e.libvirtDomainBlockRdBytesDesc,
 				prometheus.CounterValue,
 				float64(blockStats.RdBytes),
-				append(domainLabelValues, disk.Source.File, disk.Tar.Device)...)
+				append(domainLabelValues, disk.Source.File, disk.Target.Device)...)
 		}
 		if blockStats.RdReqSet {
 			ch <- prometheus.MustNewConstMetric(

@@ -27,6 +27,27 @@ import (
 	"github.com/kumina/libvirt_exporter/libvirt_schema"
 )
 
+/*
+#cgo LDFLAGS: -lvirt
+#include <libvirt/libvirt.h>
+#include <libvirt/virterror.h>
+#include <stdlib.h>
+*/
+import "C"
+
+const (
+	VIR_DOMAIN_MEMORY_STAT_SWAP_IN        = C.VIR_DOMAIN_MEMORY_STAT_SWAP_IN
+	VIR_DOMAIN_MEMORY_STAT_SWAP_OUT       = C.VIR_DOMAIN_MEMORY_STAT_SWAP_OUT
+	VIR_DOMAIN_MEMORY_STAT_MAJOR_FAULT    = C.VIR_DOMAIN_MEMORY_STAT_MAJOR_FAULT
+	VIR_DOMAIN_MEMORY_STAT_MINOR_FAULT    = C.VIR_DOMAIN_MEMORY_STAT_MINOR_FAULT
+	VIR_DOMAIN_MEMORY_STAT_UNUSED         = C.VIR_DOMAIN_MEMORY_STAT_UNUSED
+	VIR_DOMAIN_MEMORY_STAT_AVAILABLE      = C.VIR_DOMAIN_MEMORY_STAT_AVAILABLE
+	VIR_DOMAIN_MEMORY_STAT_ACTUAL_BALLOON = C.VIR_DOMAIN_MEMORY_STAT_ACTUAL_BALLOON
+	VIR_DOMAIN_MEMORY_STAT_RSS            = C.VIR_DOMAIN_MEMORY_STAT_RSS
+	VIR_DOMAIN_MEMORY_STAT_NR             = C.VIR_DOMAIN_MEMORY_STAT_NR
+	VIR_DOMAIN_MEMORY_STAT_LAST_UPDATE    = C.VIR_DOMAIN_MEMORY_STAT_LAST_UPDATE
+)
+
 // LibvirtExporter implements a Prometheus exporter for libvirt state.
 type LibvirtExporter struct {
 	uri                string
@@ -38,6 +59,7 @@ type LibvirtExporter struct {
 	libvirtDomainInfoMemoryDesc    *prometheus.Desc
 	libvirtDomainInfoNrVirtCpuDesc *prometheus.Desc
 	libvirtDomainInfoCpuTimeDesc   *prometheus.Desc
+	libvirtDomainMemoryBallonUsage *prometheus.Desc
 
 	libvirtDomainDiskSerialDesc           *prometheus.Desc
 	libvirtDomainBlockRdBytesDesc         *prometheus.Desc
@@ -93,6 +115,11 @@ func NewLibvirtExporter(uri string, exportNovaMetadata bool) (*LibvirtExporter, 
 		libvirtDomainInfoCpuTimeDesc: prometheus.NewDesc(
 			prometheus.BuildFQName("libvirt", "domain_info", "cpu_time_seconds_total"),
 			"Amount of CPU time used by the domain, in seconds.",
+			domainLabels,
+			nil),
+		libvirtDomainMemoryBallonUsage: prometheus.NewDesc(
+			prometheus.BuildFQName("libvirt", "domain_info", "memory_balloon_usage_bytes"),
+			"Memory usage of the domain, in bytes.",
 			domainLabels,
 			nil),
 		libvirtDomainDiskSerialDesc: prometheus.NewDesc(
@@ -191,6 +218,7 @@ func (e *LibvirtExporter) Describe(ch chan<- *prometheus.Desc) {
 
 	ch <- e.libvirtDomainInfoMaxMemDesc
 	ch <- e.libvirtDomainInfoMemoryDesc
+	ch <- e.libvirtDomainMemoryBallonUsage
 	ch <- e.libvirtDomainInfoNrVirtCpuDesc
 	ch <- e.libvirtDomainInfoCpuTimeDesc
 
@@ -270,6 +298,7 @@ func (e *LibvirtExporter) CollectDomain(ch chan<- prometheus.Metric, domain *lib
 	}
 
 	domainName, err := domain.GetName()
+
 	if err != nil {
 		return err
 	}
@@ -314,6 +343,28 @@ func (e *LibvirtExporter) CollectDomain(ch chan<- prometheus.Metric, domain *lib
 		float64(info.CpuTime)/1e9,
 		domainLabelValues...)
 
+	// Report memory statistics
+	memStats, err := domain.MemoryStats(VIR_DOMAIN_MEMORY_STAT_NR, 0)
+	if err != nil {
+		return err
+	}
+
+	memoryUnused := -1
+	memoryAvailable := -1
+	for _, stat := range memStats {
+		if stat.Tag == VIR_DOMAIN_MEMORY_STAT_AVAILABLE {
+			memoryAvailable = stat.Val
+		} else if stat.Tag == VIR_DOMAIN_MEMORY_STAT_UNUSED {
+			memoryUnused = stat.Val
+		}
+	}
+
+	ch <- prometheus.MustNewConstMetric(
+		e.libvirtDomainMemoryBallonUsage,
+		prometheus.GaugeValue,
+		(float64(memoryAvailable)-float64(memoryUnused))*1024,
+		domainLabelValues...)
+
 	// Report block device statistics.
 	for _, disk := range desc.Devices.Disks {
 		if disk.Device == "cdrom" || disk.Device == "fd" {
@@ -340,7 +391,7 @@ func (e *LibvirtExporter) CollectDomain(ch chan<- prometheus.Metric, domain *lib
 				e.libvirtDomainBlockRdBytesDesc,
 				prometheus.CounterValue,
 				float64(blockStats.RdBytes),
-				append(domainLabelValues, disk.Source.File, disk.Target.Device)...)
+				append(domainLabelValues, disk.Source.File, disk.Tar.Device)...)
 		}
 		if blockStats.RdReqSet {
 			ch <- prometheus.MustNewConstMetric(

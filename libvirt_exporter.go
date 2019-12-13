@@ -55,11 +55,12 @@ type LibvirtExporter struct {
 
 	libvirtUpDesc *prometheus.Desc
 
-	libvirtDomainInfoMaxMemDesc    *prometheus.Desc
-	libvirtDomainInfoMemoryDesc    *prometheus.Desc
-	libvirtDomainInfoNrVirtCpuDesc *prometheus.Desc
-	libvirtDomainInfoCpuTimeDesc   *prometheus.Desc
-	libvirtDomainMemoryBallonUsage *prometheus.Desc
+	libvirtDomainInfoMaxMemDesc        *prometheus.Desc
+	libvirtDomainInfoMemoryDesc        *prometheus.Desc
+	libvirtDomainInfoNrVirtCpuDesc     *prometheus.Desc
+	libvirtDomainInfoCpuTimeDesc       *prometheus.Desc
+	libvirtDomainMemoryBallonUsage     *prometheus.Desc
+	libvirtDomainMemoryBallonAvailable *prometheus.Desc
 
 	libvirtDomainDiskSerialDesc           *prometheus.Desc
 	libvirtDomainBlockRdBytesDesc         *prometheus.Desc
@@ -119,7 +120,12 @@ func NewLibvirtExporter(uri string, exportNovaMetadata bool) (*LibvirtExporter, 
 			nil),
 		libvirtDomainMemoryBallonUsage: prometheus.NewDesc(
 			prometheus.BuildFQName("libvirt", "domain_info", "memory_balloon_usage_bytes"),
-			"Memory usage of the domain, in bytes.",
+			"Memory usage of the domain, in kilo bytes.",
+			domainLabels,
+			nil),
+		libvirtDomainMemoryBallonAvailable: prometheus.NewDesc(
+			prometheus.BuildFQName("libvirt", "domain_info", "memory_balloon_available_bytes"),
+			"Memory usage of the domain, in kilo bytes.",
 			domainLabels,
 			nil),
 		libvirtDomainDiskSerialDesc: prometheus.NewDesc(
@@ -219,6 +225,7 @@ func (e *LibvirtExporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- e.libvirtDomainInfoMaxMemDesc
 	ch <- e.libvirtDomainInfoMemoryDesc
 	ch <- e.libvirtDomainMemoryBallonUsage
+	ch <- e.libvirtDomainMemoryBallonAvailable
 	ch <- e.libvirtDomainInfoNrVirtCpuDesc
 	ch <- e.libvirtDomainInfoCpuTimeDesc
 
@@ -358,6 +365,12 @@ func (e *LibvirtExporter) CollectDomain(ch chan<- prometheus.Metric, domain *lib
 			memoryUnused = stat.Val
 		}
 	}
+
+	ch <- prometheus.MustNewConstMetric(
+		e.libvirtDomainMemoryBallonAvailable,
+		prometheus.GaugeValue,
+		float64(memoryAvailable)/1024/1024,
+		domainLabelValues...)
 
 	ch <- prometheus.MustNewConstMetric(
 		e.libvirtDomainMemoryBallonUsage,

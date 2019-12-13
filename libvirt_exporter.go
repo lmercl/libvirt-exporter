@@ -362,7 +362,7 @@ func (e *LibvirtExporter) CollectDomain(ch chan<- prometheus.Metric, domain *lib
 	ch <- prometheus.MustNewConstMetric(
 		e.libvirtDomainMemoryBallonUsage,
 		prometheus.GaugeValue,
-		(float64(memoryAvailable)-float64(memoryUnused))*1024,
+		(float64(memoryAvailable)-float64(memoryUnused))/1024/1024,
 		domainLabelValues...)
 
 	// Report block device statistics.

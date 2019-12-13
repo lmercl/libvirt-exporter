@@ -46,6 +46,7 @@ const (
 	VIR_DOMAIN_MEMORY_STAT_RSS            = C.VIR_DOMAIN_MEMORY_STAT_RSS
 	VIR_DOMAIN_MEMORY_STAT_NR             = C.VIR_DOMAIN_MEMORY_STAT_NR
 	VIR_DOMAIN_MEMORY_STAT_LAST_UPDATE    = C.VIR_DOMAIN_MEMORY_STAT_LAST_UPDATE
+	VIR_DOMAIN_MEMORY_STAT_USABLE         = C.VIR_DOMAIN_MEMORY_STAT_USABLE
 )
 
 // LibvirtExporter implements a Prometheus exporter for libvirt state.
@@ -356,13 +357,13 @@ func (e *LibvirtExporter) CollectDomain(ch chan<- prometheus.Metric, domain *lib
 		return err
 	}
 
-	var memoryUnused uint64
+	var memoryUsable uint64
 	var memoryAvailable uint64
 	for _, stat := range memStats {
 		if stat.Tag == VIR_DOMAIN_MEMORY_STAT_AVAILABLE {
 			memoryAvailable = stat.Val
-		} else if stat.Tag == VIR_DOMAIN_MEMORY_STAT_UNUSED {
-			memoryUnused = stat.Val
+		} else if stat.Tag == VIR_DOMAIN_MEMORY_STAT_USABLE {
+			memoryUsable = stat.Val
 		}
 	}
 
@@ -375,7 +376,7 @@ func (e *LibvirtExporter) CollectDomain(ch chan<- prometheus.Metric, domain *lib
 	ch <- prometheus.MustNewConstMetric(
 		e.libvirtDomainMemoryBallonUsage,
 		prometheus.GaugeValue,
-		(float64(memoryAvailable)-float64(memoryUnused))/1024/1024,
+		(float64(memoryAvailable)-float64(memoryUsable))/1024/1024,
 		domainLabelValues...)
 
 	// Report block device statistics.

@@ -120,13 +120,13 @@ func NewLibvirtExporter(uri string, exportNovaMetadata bool) (*LibvirtExporter, 
 			domainLabels,
 			nil),
 		libvirtDomainMemoryBallonUsage: prometheus.NewDesc(
-			prometheus.BuildFQName("libvirt", "domain_info", "memory_balloon_usage_bytes"),
-			"Memory usage of the domain, in kilo bytes.",
+			prometheus.BuildFQName("libvirt", "domain_info", "memory_balloon_usage_gigabytes"),
+			"Memory usage of the domain, in giga bytes.",
 			domainLabels,
 			nil),
 		libvirtDomainMemoryBallonAvailable: prometheus.NewDesc(
-			prometheus.BuildFQName("libvirt", "domain_info", "memory_balloon_available_bytes"),
-			"Memory usage of the domain, in kilo bytes.",
+			prometheus.BuildFQName("libvirt", "domain_info", "memory_balloon_available_gitabytes"),
+			"Memory usage of the domain, in giga bytes.",
 			domainLabels,
 			nil),
 		libvirtDomainDiskSerialDesc: prometheus.NewDesc(

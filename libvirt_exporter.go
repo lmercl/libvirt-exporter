@@ -125,7 +125,7 @@ func NewLibvirtExporter(uri string, exportNovaMetadata bool) (*LibvirtExporter, 
 			domainLabels,
 			nil),
 		libvirtDomainMemoryBallonAvailable: prometheus.NewDesc(
-			prometheus.BuildFQName("libvirt", "domain_info", "memory_balloon_available_gitabytes"),
+			prometheus.BuildFQName("libvirt", "domain_info", "memory_balloon_available_gigabytes"),
 			"Memory usage of the domain, in giga bytes.",
 			domainLabels,
 			nil),

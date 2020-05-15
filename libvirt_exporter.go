@@ -62,6 +62,7 @@ type LibvirtExporter struct {
 	libvirtDomainInfoCpuTimeDesc       *prometheus.Desc
 	libvirtDomainMemoryBallonUsage     *prometheus.Desc
 	libvirtDomainMemoryBallonAvailable *prometheus.Desc
+	libvirtDomainNumaNodeSet           *prometheus.Desc
 
 	libvirtDomainDiskSerialDesc           *prometheus.Desc
 	libvirtDomainBlockRdBytesDesc         *prometheus.Desc
@@ -128,6 +129,11 @@ func NewLibvirtExporter(uri string, exportNovaMetadata bool) (*LibvirtExporter, 
 			prometheus.BuildFQName("libvirt", "domain_info", "memory_balloon_available_gigabytes"),
 			"Memory usage of the domain, in giga bytes.",
 			domainLabels,
+			nil),
+		libvirtDomainNumaNodeSet: prometheus.NewDesc(
+			prometheus.BuildFQName("libvirt", "domain_info", "numa_nodeset"),
+			"Number of cores used by the domain",
+			append(domainLabels, "numa_node"),
 			nil),
 		libvirtDomainDiskSerialDesc: prometheus.NewDesc(
 			prometheus.BuildFQName("libvirt", "domain_disk", "serial"),
@@ -227,6 +233,7 @@ func (e *LibvirtExporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- e.libvirtDomainInfoMemoryDesc
 	ch <- e.libvirtDomainMemoryBallonUsage
 	ch <- e.libvirtDomainMemoryBallonAvailable
+	ch <- e.libvirtDomainNumaNodeSet
 	ch <- e.libvirtDomainInfoNrVirtCpuDesc
 	ch <- e.libvirtDomainInfoCpuTimeDesc
 
@@ -366,6 +373,18 @@ func (e *LibvirtExporter) CollectDomain(ch chan<- prometheus.Metric, domain *lib
 			memoryUsable = stat.Val
 		}
 	}
+
+	numa, _ := domain.GetNumaParameters(0)
+	numaNodeSet := "None"
+	if numa.Nodeset != "" {
+		numaNodeSet = numa.Nodeset
+	}
+
+	ch <- prometheus.MustNewConstMetric(
+		e.libvirtDomainNumaNodeSet,
+		prometheus.GaugeValue,
+		float64(info.NrVirtCpu),
+		append(domainLabelValues, numaNodeSet)...)
 
 	ch <- prometheus.MustNewConstMetric(
 		e.libvirtDomainMemoryBallonAvailable,
@@ -560,3 +579,4 @@ func main() {
 	})
 	log.Fatal(http.ListenAndServe(*listenAddress, nil))
 }
+

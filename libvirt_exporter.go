@@ -133,7 +133,7 @@ func NewLibvirtExporter(uri string, exportNovaMetadata bool) (*LibvirtExporter, 
 			nil),
 		libvirtDomainNumaNodeSet: prometheus.NewDesc(
 			prometheus.BuildFQName("libvirt", "domain_info", "numa_nodeset"),
-			"Number of cores used by the domain (this is my check)",
+			"Number of cores used by the domaaaaaaaaaaaaaaaaaaaain.",
 			append(domainLabels, "numa_node"),
 			nil),
 		libvirtDomainHugePages: prometheus.NewDesc(

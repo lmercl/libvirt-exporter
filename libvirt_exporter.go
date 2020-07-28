@@ -19,12 +19,12 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/libvirt/libvirt-go"
+	"github.com/kumina/libvirt_exporter/libvirt_schema"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/kumina/libvirt_exporter/libvirt_schema"
+	libvirt "github.com/libvirt/libvirt-go"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 /*
@@ -63,6 +63,7 @@ type LibvirtExporter struct {
 	libvirtDomainMemoryBallonUsage     *prometheus.Desc
 	libvirtDomainMemoryBallonAvailable *prometheus.Desc
 	libvirtDomainNumaNodeSet           *prometheus.Desc
+	libvirtDomainHugePages             *prometheus.Desc
 
 	libvirtDomainDiskSerialDesc           *prometheus.Desc
 	libvirtDomainBlockRdBytesDesc         *prometheus.Desc
@@ -132,8 +133,13 @@ func NewLibvirtExporter(uri string, exportNovaMetadata bool) (*LibvirtExporter, 
 			nil),
 		libvirtDomainNumaNodeSet: prometheus.NewDesc(
 			prometheus.BuildFQName("libvirt", "domain_info", "numa_nodeset"),
-			"Number of cores used by the domain",
+			"Number of cores used by the domain (this is my check)",
 			append(domainLabels, "numa_node"),
+			nil),
+		libvirtDomainHugePages: prometheus.NewDesc(
+			prometheus.BuildFQName("libvirt", "domain_info", "hugepages"),
+			"Hugepages size by the domain",
+			append(domainLabels, "hugepages"),
 			nil),
 		libvirtDomainDiskSerialDesc: prometheus.NewDesc(
 			prometheus.BuildFQName("libvirt", "domain_disk", "serial"),
@@ -234,6 +240,7 @@ func (e *LibvirtExporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- e.libvirtDomainMemoryBallonUsage
 	ch <- e.libvirtDomainMemoryBallonAvailable
 	ch <- e.libvirtDomainNumaNodeSet
+	ch <- e.libvirtDomainHugePages
 	ch <- e.libvirtDomainInfoNrVirtCpuDesc
 	ch <- e.libvirtDomainInfoCpuTimeDesc
 
@@ -579,4 +586,3 @@ func main() {
 	})
 	log.Fatal(http.ListenAndServe(*listenAddress, nil))
 }
-

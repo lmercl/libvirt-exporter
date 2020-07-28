@@ -1,5 +1,5 @@
 # Stage 1: Build libvirt exporter
-FROM golang:alpine
+FROM golang:alpine3.10
 
 # Install dependencies
 RUN apk add --update git gcc g++ make libc-dev portablexdr-dev linux-headers libnl-dev perl libtirpc-dev pkgconfig wget
@@ -18,7 +18,7 @@ RUN ./configure --disable-shared --enable-static --localstatedir=/var --without-
     sed -i 's/^Libs:.*/& -lnl -ltirpc -lxml2/' /usr/local/lib/pkgconfig/libvirt.pc
 
 # Prepare working directory
-ENV LIBVIRT_EXPORTER_PATH=/go/src/github.com/kumina/libvirt_exporter
+ENV LIBVIRT_EXPORTER_PATH=/go/src/github.com/lmercl/libvirt_exporter
 RUN mkdir -p $LIBVIRT_EXPORTER_PATH
 WORKDIR $LIBVIRT_EXPORTER_PATH
 COPY . .
@@ -32,7 +32,7 @@ RUN go get -d ./... && \
 FROM scratch
 
 # Copy binary from Stage 1
-COPY --from=0 /go/src/github.com/kumina/libvirt_exporter/libvirt_exporter .
+COPY --from=0 /go/src/github.com/lmercl/libvirt_exporter/libvirt_exporter .
 
 # Entrypoint for starting exporter
 ENTRYPOINT [ "./libvirt_exporter" ]

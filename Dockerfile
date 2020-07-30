@@ -18,7 +18,7 @@ RUN ./configure --disable-shared --enable-static --localstatedir=/var --without-
     sed -i 's/^Libs:.*/& -lnl -ltirpc -lxml2/' /usr/local/lib/pkgconfig/libvirt.pc
 
 # Prepare working directory
-ENV LIBVIRT_EXPORTER_PATH=/go/src/github.com/lmercl/libvirt-exporter
+ENV LIBVIRT_EXPORTER_PATH=/go/src/github.com/lmercl/libvirt_exporter
 RUN mkdir -p $LIBVIRT_EXPORTER_PATH
 WORKDIR $LIBVIRT_EXPORTER_PATH
 COPY . .
@@ -32,7 +32,7 @@ RUN go get -d ./... && \
 FROM scratch
 
 # Copy binary from Stage 1
-COPY --from=0 /go/src/github.com/lmercl/libvirt-exporter/libvirt_exporter .
+COPY --from=0 /go/src/github.com/lmercl/libvirt_exporter/libvirt_exporter .
 
 # Entrypoint for starting exporter
 ENTRYPOINT [ "./libvirt_exporter" ]

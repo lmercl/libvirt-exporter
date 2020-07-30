@@ -133,11 +133,11 @@ func NewLibvirtExporter(uri string, exportNovaMetadata bool) (*LibvirtExporter, 
 			nil),
 		libvirtDomainNumaNodeSet: prometheus.NewDesc(
 			prometheus.BuildFQName("libvirt", "domain_info", "numa_nodeset"),
-			"Number of cores used by the domaaaaaaaaaaaaaaaaaaaain.",
+			"Number of cores used by the domain.",
 			append(domainLabels, "numa_node"),
 			nil),
 		libvirtDomainHugePages: prometheus.NewDesc(
-			prometheus.BuildFQName("libvirt", "domain_info", "hugepages"),
+			prometheus.BuildFQName("libvirt", "domain_info", "hugepages_tbd"),
 			"Hugepages size by the domain",
 			append(domainLabels, "hugepages"),
 			nil),
@@ -403,6 +403,12 @@ func (e *LibvirtExporter) CollectDomain(ch chan<- prometheus.Metric, domain *lib
 		e.libvirtDomainMemoryBallonUsage,
 		prometheus.GaugeValue,
 		(float64(memoryAvailable)-float64(memoryUsable))/1024/1024,
+		domainLabelValues...)
+
+	ch <- prometheus.MustNewConstMetric(
+		e.libvirtDomainHugePages,
+		prometheus.GaugeValue,
+		float64(memoryAvailable)/1024/1024,
 		domainLabelValues...)
 
 	// Report block device statistics.

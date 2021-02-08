@@ -47,12 +47,12 @@ type Disk struct {
 	Device string     `xml:"device,attr"`
 	Source DiskSource `xml:"source"`
 	Target DiskTarget `xml:"target"`
-	Serial string     `xml:"serial"`
+        DiskType string   `xml:"type,attr"`
 }
 
 type DiskSource struct {
 	File string `xml:"file,attr"`
-	Dev  string `xml:"dev,attr"`
+        Name string `xml:"name,attr"`
 }
 
 type DiskTarget struct {
@@ -61,7 +61,16 @@ type DiskTarget struct {
 
 type Interface struct {
 	Source InterfaceSource `xml:"source"`
-	Target InterfaceTarget `xml:"target"`
+        Target      InterfaceTarget      `xml:"target"`
+        Virtualport InterfaceVirtualPort `xml:"virtualport"`	
+}
+
+type InterfaceVirtualPort struct {	
+        Parameters InterfaceVirtualPortParam `xml:"parameters"`	
+}
+	
+type InterfaceVirtualPortParam struct {	
+        InterfaceId string `xml:"interfaceid,attr"`	
 }
 
 type InterfaceSource struct {
@@ -70,4 +79,16 @@ type InterfaceSource struct {
 
 type InterfaceTarget struct {
 	Device string `xml:"dev,attr"`
+}
+
+	
+type VirDomainMemoryStats struct {	
+        Major_fault    uint64	
+        Minor_fault    uint64
+        Unused         uint64	
+        Available      uint64	
+        Actual_balloon uint64	
+        Rss            uint64
+        Usable         uint64
+        Disk_caches    uint64
 }

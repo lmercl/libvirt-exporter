@@ -19,40 +19,21 @@ type Domain struct {
 	UUID     string   `xml:"uuid"`
 }
 
-type Metadata struct {
-	// The actual xml tag is nova:instance, but we don't care about the namespaces
-	NovaInstance NovaInstance `xml:"instance"`
-}
-
-type NovaInstance struct {
-	Name   string     `xml:"name"`
-	Flavor NovaFlavor `xml:"flavor"`
-	Owner  NovaOwner  `xml:"owner"`
-}
-
-type NovaFlavor struct {
-	Name string `xml:"name,attr"`
-}
-
-type NovaOwner struct {
-	ProjectName string `xml:"project"`
-}
-
 type Devices struct {
 	Disks      []Disk      `xml:"disk"`
 	Interfaces []Interface `xml:"interface"`
 }
 
 type Disk struct {
-	Device string     `xml:"device,attr"`
-	Source DiskSource `xml:"source"`
-	Target DiskTarget `xml:"target"`
-        DiskType string   `xml:"type,attr"`
+	Device   string     `xml:"device,attr"`
+	Source   DiskSource `xml:"source"`
+	Target   DiskTarget `xml:"target"`
+	DiskType string     `xml:"type,attr"`
 }
 
 type DiskSource struct {
 	File string `xml:"file,attr"`
-        Name string `xml:"name,attr"`
+	Name string `xml:"name,attr"`
 }
 
 type DiskTarget struct {
@@ -60,17 +41,16 @@ type DiskTarget struct {
 }
 
 type Interface struct {
-	Source InterfaceSource `xml:"source"`
-        Target      InterfaceTarget      `xml:"target"`
-        Virtualport InterfaceVirtualPort `xml:"virtualport"`	
+	Source      InterfaceSource      `xml:"source"`
+	Target      InterfaceTarget      `xml:"target"`
+	Virtualport InterfaceVirtualPort `xml:"virtualport"`
 }
 
-type InterfaceVirtualPort struct {	
-        Parameters InterfaceVirtualPortParam `xml:"parameters"`	
+type InterfaceVirtualPort struct {
+	Parameters InterfaceVirtualPortParam `xml:"parameters"`
 }
-	
-type InterfaceVirtualPortParam struct {	
-        InterfaceId string `xml:"interfaceid,attr"`	
+type InterfaceVirtualPortParam struct {
+	InterfaceId string `xml:"interfaceid,attr"`
 }
 
 type InterfaceSource struct {
@@ -81,14 +61,13 @@ type InterfaceTarget struct {
 	Device string `xml:"dev,attr"`
 }
 
-	
-type VirDomainMemoryStats struct {	
-        Major_fault    uint64	
-        Minor_fault    uint64
-        Unused         uint64	
-        Available      uint64	
-        Actual_balloon uint64	
-        Rss            uint64
-        Usable         uint64
-        Disk_caches    uint64
+type VirDomainMemoryStats struct {
+	Major_fault    uint64
+	Minor_fault    uint64
+	Unused         uint64
+	Available      uint64
+	Actual_balloon uint64
+	Rss            uint64
+	Usable         uint64
+	Disk_caches    uint64
 }
